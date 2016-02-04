@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2010/02/08 12:11:05.153.pas,C:\Users\Ye\Documents\RAD Studio\Projects\Unit1.pas=F:\工程\保密人 V2.0\MainForm.pas</Transaction>
+    <Transaction>2010/02/08 12:11:05.153.dfm,C:\Users\Ye\Documents\RAD Studio\Projects\Unit1.dfm=F:\工程\保密人 V2.0\MainForm.dfm</Transaction>
+    <Transaction>2010/02/08 12:11:15.082.dproj,C:\Users\Ye\Documents\RAD Studio\Projects\Project1.dproj=F:\工程\保密人 V2.0\Keeper2.dproj</Transaction>
+    <Transaction>2010/02/08 14:39:57.087.pas,F:\工程\保密人 V2.0\Unit1.pas=F:\工程\保密人 V2.0\ELAES.pas</Transaction>
+    <Transaction>2010/02/08 14:40:32.859.pas,F:\工程\保密人 V2.0\Unit1.pas=F:\工程\保密人 V2.0\AES.pas</Transaction>
+    <Transaction>2010/02/08 18:24:41.333.pas,F:\工程\保密人 V2.0\Unit1.pas=F:\工程\保密人 V2.0\Thread_Tenc.pas</Transaction>
+    <Transaction>2010/02/08 20:27:16.115.pas,F:\工程\保密人 V2.0\Unit1.pas=F:\工程\保密人 V2.0\Thread_TDes.pas</Transaction>
+    <Transaction>2010/02/09 12:23:10.693.pas,F:\工程\保密人 V2.0\Unit2.pas=F:\工程\保密人 V2.0\InitForm.pas</Transaction>
+    <Transaction>2010/02/09 12:23:10.693.dfm,F:\工程\保密人 V2.0\Unit2.dfm=F:\工程\保密人 V2.0\InitForm.dfm</Transaction>
+    <Transaction>2010/02/09 14:15:48.898.pas,F:\工程\保密人 V2.0\Unit1.pas=F:\工程\保密人 V2.0\Thread_Tinit.dcu.pas</Transaction>
+    <Transaction>2010/02/09 14:16:25.877.pas,F:\工程\保密人 V2.0\Thread_Tinit.dcu.pas=F:\工程\保密人 V2.0\Thread_Tinit.pas</Transaction>
+    <Transaction>2010/02/16 21:21:22.541.pas,F:\工程\保密人 V2.0\Thread_Tinit.pas=</Transaction>
+    <Transaction>2010/02/18 13:48:33.096.pas,F:\工程\保密人 V2.0\Unit3.pas=F:\工程\保密人 V2.0\addtype.pas</Transaction>
+    <Transaction>2010/02/18 13:48:33.096.dfm,F:\工程\保密人 V2.0\Unit3.dfm=F:\工程\保密人 V2.0\addtype.dfm</Transaction>
+    <Transaction>2010/02/19 13:11:00.905.pas,F:\工程\保密人 V2.0\addtype.pas=F:\工程\保密人 V2.0\add.pas</Transaction>
+    <Transaction>2010/02/19 13:11:00.905.dfm,F:\工程\保密人 V2.0\addtype.dfm=F:\工程\保密人 V2.0\add.dfm</Transaction>
+    <Transaction>2010/02/19 13:18:32.596.pas,F:\工程\保密人 V2.0\add.pas=</Transaction>
+    <Transaction>2010/02/19 13:18:32.596.dfm,F:\工程\保密人 V2.0\add.dfm=</Transaction>
+  </Transactions>
+</BorlandProject>

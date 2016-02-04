@@ -1,0 +1,22 @@
+If you want to open the source file with Text Editor,
+please enter the "Source for TXT [able to be opened with a text editor]" folder.
+
+If you want to see the Original source file which can be compile in Delphi with necessary packages,
+please enter the "Source [Original,able to compile in Delphi with necessary packages]" folder.
+-------------------------------------------------------------
+This Application is built in Delphi 2010 with extra package called DynamicSkinForm by almdev.com   
+-------------------------------------------------------------
+Source Files List
+Keeper2.dpr  ----- KeyKeeper Project File 
+AES.pas  ----- imports for AES encryption (Modified form internet) 
+ELAES.pas  ----- Main sources for AES (Advanced Encryption Standard ) encryption by EldoS, Alexander Ionov
+InitForm.pas  ----- for initialization form
+MainForm.pas  ----- for Main form
+Thread_Tenc.pas  ----- for encrypting thread 
+Thread_TDes.pas  ----- for Decrypting thread 
+Thread_Tinit.pas  ----- initialization for thread
+-------------------------------------------------------------
+There are definations for ALL files in "Source for TXT [able to be opened with a text editor]" folder.
+(definations are written after the symbol "//" )
+-------------------------------------------------------------
+Using thread technology,which can improve the application a lot and avoid the app suddenly breaking down!

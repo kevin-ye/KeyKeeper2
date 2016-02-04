@@ -1,0 +1,221 @@
+Unit InitForm;   //initialization
+
+Interface
+
+Uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, DynamicSkinForm, SkinCtrls, SkinExCtrls, SkinBoxCtrls;
+
+Type
+  TForm2 = Class(TForm)
+    spDynamicSkinForm1: TspDynamicSkinForm;
+    spSkinLabel1: TspSkinLabel;
+    spSkinPasswordEdit1: TspSkinPasswordEdit;
+    spSkinGauge1: TspSkinGauge;
+    spSkinShadowLabel1: TspSkinShadowLabel;
+    spSkinShadowLabel2: TspSkinShadowLabel;
+    spSkinButton1: TspSkinButton;
+    spSkinButton2: TspSkinButton;
+    Procedure spSkinButton2Click(Sender: TObject);
+    Procedure FormCreate(Sender: TObject);
+    Procedure spSkinButton1Click(Sender: TObject);
+    Procedure spSkinPasswordEdit1KeyUp(Sender: TObject; Var Key: Word;
+      Shift: TShiftState);
+  Private
+    { Private declarations }
+  Public
+    { Public declarations }
+    passwcheck: String;
+    pwchecked: Boolean;
+    ccount: Integer;
+  End;
+
+Var
+  Form2: TForm2;
+
+Implementation
+
+Uses MainForm, AES;
+{$R *.dfm}
+
+Procedure TForm2.FormCreate(Sender: TObject);
+Begin
+  ccount := 5;    //number of chances of password trying
+  pwchecked := False; //set a var for password checking symbol
+
+  //if no database,ask user to create a new profile
+  If Not FileExists(ExtractFilePath(Application.ExeName)
+      + '\Data\MainData.kdb') Then 
+  begin
+    spSkinButton1.Caption := 'Create a profile';
+    spSkinShadowLabel2.Caption := 'The first time you use the KeyKeeper,please enter new password in order to creat a profile.'
+  end;
+End;
+
+Procedure TForm2.spSkinButton1Click(Sender: TObject);
+Var
+  f: TextFile;
+  i, c: Integer;
+Begin
+  If spSkinButton1.Caption = 'Login' Then
+  Begin
+    If spSkinPasswordEdit1.Text = '' Then    //check if the password box is empty
+    Begin
+      Application.MessageBox('Please enter the password', PChar(Application.Title),
+        MB_OK + MB_ICONINFORMATION + MB_TOPMOST);
+      Exit;
+    End;
+    pwchecked := False;
+    Try
+      // temp := DecryptString(passwcheck, spSkinPasswordEdit1.Text, kb192);
+      // Decrypt the database
+      DecryptFile(ExtractFilePath(Application.ExeName) + '\Data\MainData.kdb',
+        ExtractFilePath(Application.ExeName) + '\Data\kdb.tmp',
+        'Keeper2.PassWord.!', kb192);
+      //get the correct password from decrypted database
+      AssignFile(f, ExtractFilePath(Application.ExeName) + '\Data\kdb.tmp');
+      Reset(f);
+      Readln(f, form1.password);
+      CloseFile(f);
+      DeleteFile(ExtractFilePath(Application.ExeName) + '\Data\kdb.tmp');
+      If form1.password = spSkinPasswordEdit1.Text Then            //if password is correct ,set "pwchecked" true
+        pwchecked := True;
+    Except
+      pwchecked := False;
+    End;
+    If Not pwchecked Then            //if password is incorrect
+    Begin
+      Application.MessageBox('Password incorrect!' + #13#10 + 'Login failed!', PChar
+          (Application.Title), MB_OK + MB_ICONSTOP + MB_TOPMOST);
+      ccount := ccount - 1;  //reduce the numnbers of chances
+      If ccount = 0 Then
+      Begin
+        Application.MessageBox('KeyKeeper will close after entering incorrect password for 5 times', PChar(Application.Title),
+          MB_OK + MB_ICONWARNING + MB_TOPMOST);
+        Application.Terminate;
+      End;
+      spSkinShadowLabel2.Caption := 'Chances left:' + IntToStr(ccount);
+      Exit;
+    End;
+    spSkinShadowLabel2.Caption := 'Checked and Passed！Welcome back!';  //set "Welcome"
+  End
+  Else
+  Begin
+    Begin
+      If spSkinPasswordEdit1.Text = '' Then
+      Begin
+        Application.MessageBox('Please enter the password.' + #13#10 +
+            'This password is for KeyKeeper protecting ALL you private datas.After that,you DO NOT need to remember other passwords!', PChar
+            (Application.Title), MB_OK + MB_ICONINFORMATION + MB_TOPMOST);
+        Exit;
+      End;
+      Try
+        AssignFile(f, ExtractFilePath(Application.ExeName) + '\Data\kdb.tmp');
+        Rewrite(f);
+        Writeln(f, spSkinPasswordEdit1.Text);
+        CloseFile(f);
+        EncryptFile(ExtractFilePath(Application.ExeName) + '\Data\kdb.tmp',
+          ExtractFilePath(Application.ExeName) + '\Data\MainData.kdb',
+          'Keeper2.PassWord.!', kb192);
+        DeleteFile(ExtractFilePath(Application.ExeName) + '\Data\kdb.tmp');
+        form1.password := spSkinPasswordEdit1.Text;
+        EncryptFile(ExtractFilePath(Application.ExeName)
+            + '\Data\Creation.data', ExtractFilePath(Application.ExeName)
+            + '\Data\MainData.mdb', spSkinPasswordEdit1.Text, kb192);
+        pwchecked := True;
+      Except
+        Application.MessageBox('Sorry,fail to create a profile' + #13#10 + 'Please check whether your disk is able to Write.DO NOT run KeyKeerp on a ReadOnly disk!.', PChar
+            (Application.Title), MB_OK + MB_ICONSTOP + MB_TOPMOST);
+        spSkinShadowLabel2.Caption := 'Fail to create a profile!Please check whether your disk is able to Write.DO NOT run KeyKeerp on a ReadOnly disk!';
+        Application.ProcessMessages;
+        Exit;
+      End;
+    End;
+  End;
+  If pwchecked Then
+  Begin
+    spSkinShadowLabel2.Caption := 'Preparing for database...';
+    spSkinGauge1.Value := 10;
+    Application.ProcessMessages;
+    DecryptFile(ExtractFilePath(Application.ExeName) + '\Data\MainData.mdb',
+      ExtractFilePath(Application.ExeName) + '\Data\MainData.tmp',
+      spSkinPasswordEdit1.Text, kb192);
+    Form2.spSkinButton1.Enabled := False;
+    Form2.spSkinButton2.Enabled := False;
+    Form2.spSkinPasswordEdit1.Enabled := False;
+    // 开始初始化
+    // pw
+    With form1.ADOQuery1 Do
+    Begin
+      Close;
+      SQL.Clear;
+      SQL.Add('select * from pw');
+      Open;
+      First;
+      ccount := 0;
+      spSkinShadowLabel2.Caption := 'The First source of data... Total: ' + IntToStr(recordcount);
+      spSkinGauge1.Value := 20;
+      Application.ProcessMessages;
+      form1.spSkinListBox1.Items.Clear;
+      form1.spSkinListBox1.Items.BeginUpdate;
+      While Not Eof Do
+      Begin
+        form1.spSkinListBox1.Items.Add(FieldByName('标题名').AsString);
+        Next;
+        inc(ccount);
+        spSkinShadowLabel2.Caption := 'The First source of data... Total: ' + IntToStr(recordcount)
+          + ' ,Finished: ' + IntToStr(ccount);
+        spSkinGauge1.Value := 20 + round(40 * (ccount / recordcount));
+        Application.ProcessMessages;
+      End;
+      form1.spSkinListBox1.Items.EndUpdate;
+    End;
+    // pw end
+    // words
+    With form1.ADOQuery1 Do
+    Begin
+      Close;
+      SQL.Clear;
+      SQL.Add('select * from words');
+      Open;
+      First;
+      ccount := 0;
+      spSkinShadowLabel2.Caption := 'The Second source of data... Total: ' + IntToStr(recordcount);
+      spSkinGauge1.Value := 60;
+      Application.ProcessMessages;
+      form1.spSkinListBox2.Items.Clear;
+      form1.spSkinListBox2.Items.BeginUpdate;
+      While Not Eof Do
+      Begin
+        form1.spSkinListBox2.Items.Add(FieldByName('标题名').AsString);
+        Next;
+        inc(ccount);
+        spSkinShadowLabel2.Caption := 'The Second source of data... Total: ' + IntToStr(recordcount)
+          + ' ,Finished: ' + IntToStr(ccount);
+        spSkinGauge1.Value := 60 + round(40 * (ccount / recordcount));
+        Application.ProcessMessages;
+      End;
+      form1.spSkinListBox2.Items.EndUpdate;
+    End;
+    // words end
+    // 结束
+    spSkinShadowLabel2.Caption := ' Initialization Finished!';
+    Application.ProcessMessages;
+    Form2.Close;
+  End;
+End;
+
+Procedure TForm2.spSkinButton2Click(Sender: TObject);
+Begin
+  Application.Terminate;
+End;
+
+Procedure TForm2.spSkinPasswordEdit1KeyUp(Sender: TObject; Var Key: Word;
+  Shift: TShiftState);
+Begin
+  If Key = 13 Then
+    spSkinButton1Click(Sender);
+End;
+
+
+End.

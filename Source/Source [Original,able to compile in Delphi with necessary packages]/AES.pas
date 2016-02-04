@@ -1,0 +1,329 @@
+(* ************************************************ *)
+(* *)
+(* Advanced Encryption Standard (AES) *)
+(* Interface Unit v1.3 *)
+(* *)
+(* *)
+(* Copyright (c) 2002 Jorlen Young *)
+(* *)
+(* *)
+(* *)
+(* *)
+(* ************************************************ *)
+
+Unit AES;
+
+Interface
+
+Uses
+  SysUtils, Classes, Math, ElAES;
+
+Type
+  TKeyBit = (kb128, kb192, kb256);
+
+Function StrToHex(Value: String): String;
+Function HexToStr(Value: String): String;
+Function EncryptString(Value: String; Key: String; KeyBit: TKeyBit = kb128)
+  : String;
+Function DecryptString(Value: String; Key: String; KeyBit: TKeyBit = kb128)
+  : String;
+Function EncryptStream(Stream: TStream; Key: String; KeyBit: TKeyBit = kb128)
+  : TStream;
+Function DecryptStream(Stream: TStream; Key: String; KeyBit: TKeyBit = kb128)
+  : TStream;
+Procedure EncryptFile(SourceFile, DestFile: String; Key: String;
+  KeyBit: TKeyBit = kb128);
+Procedure DecryptFile(SourceFile, DestFile: String; Key: String;
+  KeyBit: TKeyBit = kb128);
+
+Implementation
+
+Function StrToHex(Value: String): String;
+Var
+  I: Integer;
+Begin
+  Result := '';
+  For I := 1 To Length(Value) Do
+    Result := Result + IntToHex(Ord(Value[I]), 2);
+End;
+
+Function HexToStr(Value: String): String;
+Var
+  I: Integer;
+Begin
+  Result := '';
+  For I := 1 To Length(Value) Do
+  Begin
+    If ((I Mod 2) = 1) Then
+      Result := Result + Chr(StrToInt('0x' + Copy(Value, I, 2)));
+  End;
+End;
+
+{ --  128key -- }
+Function EncryptString(Value: String; Key: String; KeyBit: TKeyBit = kb128)
+  : String;
+Var
+  SS, DS: TStringStream;
+  Size: Int64;
+  AESKey128: TAESKey128;
+  AESKey192: TAESKey192;
+  AESKey256: TAESKey256;
+Begin
+  Result := '';
+  SS := TStringStream.Create(Value);
+  DS := TStringStream.Create('');
+  Try
+    Size := SS.Size;
+    DS.WriteBuffer(Size, SizeOf(Size));
+    { --  128 key max 16bytes -- }
+    If KeyBit = kb128 Then
+    Begin
+      FillChar(AESKey128, SizeOf(AESKey128), 0);
+      Move(PChar(Key)^, AESKey128, Min(SizeOf(AESKey128), Length(Key)));
+      EncryptAESStreamECB(SS, 0, AESKey128, DS);
+    End;
+    { --  192 key 24 bytes -- }
+    If KeyBit = kb192 Then
+    Begin
+      FillChar(AESKey192, SizeOf(AESKey192), 0);
+      Move(PChar(Key)^, AESKey192, Min(SizeOf(AESKey192), Length(Key)));
+      EncryptAESStreamECB(SS, 0, AESKey192, DS);
+    End;
+    { --  256 key 32 bytes -- }
+    If KeyBit = kb256 Then
+    Begin
+      FillChar(AESKey256, SizeOf(AESKey256), 0);
+      Move(PChar(Key)^, AESKey256, Min(SizeOf(AESKey256), Length(Key)));
+      EncryptAESStreamECB(SS, 0, AESKey256, DS);
+    End;
+    Result := StrToHex(DS.DataString);
+  Finally
+    SS.Free;
+    DS.Free;
+  End;
+End;
+
+{ --  128key -- }
+Function DecryptString(Value: String; Key: String; KeyBit: TKeyBit = kb128)
+  : String;
+Var
+  SS, DS: TStringStream;
+  Size: Int64;
+  AESKey128: TAESKey128;
+  AESKey192: TAESKey192;
+  AESKey256: TAESKey256;
+Begin
+  Result := '';
+  SS := TStringStream.Create(HexToStr(Value));
+  DS := TStringStream.Create('');
+  Try
+    Size := SS.Size;
+    SS.ReadBuffer(Size, SizeOf(Size));
+    { --  128 key 16bytes -- }
+    If KeyBit = kb128 Then
+    Begin
+      FillChar(AESKey128, SizeOf(AESKey128), 0);
+      Move(PChar(Key)^, AESKey128, Min(SizeOf(AESKey128), Length(Key)));
+      DecryptAESStreamECB(SS, SS.Size - SS.Position, AESKey128, DS);
+    End;
+    { --  128 key 24bytes -- }
+    If KeyBit = kb192 Then
+    Begin
+      FillChar(AESKey192, SizeOf(AESKey192), 0);
+      Move(PChar(Key)^, AESKey192, Min(SizeOf(AESKey192), Length(Key)));
+      DecryptAESStreamECB(SS, SS.Size - SS.Position, AESKey192, DS);
+    End;
+    { --  128 key 32bytes -- }
+    If KeyBit = kb256 Then
+    Begin
+      FillChar(AESKey256, SizeOf(AESKey256), 0);
+      Move(PChar(Key)^, AESKey256, Min(SizeOf(AESKey256), Length(Key)));
+      DecryptAESStreamECB(SS, SS.Size - SS.Position, AESKey256, DS);
+    End;
+    Result := DS.DataString;
+  Finally
+    SS.Free;
+    DS.Free;
+  End;
+End;
+
+{ --  stream 128 key-- }
+Function EncryptStream(Stream: TStream; Key: String; KeyBit: TKeyBit = kb128)
+  : TStream;
+Var
+  Count: Int64;
+  OutStrm: TStream;
+  AESKey128: TAESKey128;
+  AESKey192: TAESKey192;
+  AESKey256: TAESKey256;
+Begin
+  OutStrm := TStream.Create;
+  Stream.Position := 0;
+  Count := Stream.Size;
+  OutStrm.Write(Count, SizeOf(Count));
+  Try
+    { --  128 key 16 bytes -- }
+    If KeyBit = kb128 Then
+    Begin
+      FillChar(AESKey128, SizeOf(AESKey128), 0);
+      Move(PChar(Key)^, AESKey128, Min(SizeOf(AESKey128), Length(Key)));
+      EncryptAESStreamECB(Stream, 0, AESKey128, OutStrm);
+    End;
+    { --  192 key 24 bytes -- }
+    If KeyBit = kb192 Then
+    Begin
+      FillChar(AESKey192, SizeOf(AESKey192), 0);
+      Move(PChar(Key)^, AESKey192, Min(SizeOf(AESKey192), Length(Key)));
+      EncryptAESStreamECB(Stream, 0, AESKey192, OutStrm);
+    End;
+    { --  256 key 32 bytes -- }
+    If KeyBit = kb256 Then
+    Begin
+      FillChar(AESKey256, SizeOf(AESKey256), 0);
+      Move(PChar(Key)^, AESKey256, Min(SizeOf(AESKey256), Length(Key)));
+      EncryptAESStreamECB(Stream, 0, AESKey256, OutStrm);
+    End;
+    Result := OutStrm;
+  Finally
+    OutStrm.Free;
+  End;
+End;
+
+{ --  stream 128key -- }
+Function DecryptStream(Stream: TStream; Key: String; KeyBit: TKeyBit = kb128)
+  : TStream;
+Var
+  Count, OutPos: Int64;
+  OutStrm: TStream;
+  AESKey128: TAESKey128;
+  AESKey192: TAESKey192;
+  AESKey256: TAESKey256;
+Begin
+  OutStrm := TStream.Create;
+  Stream.Position := 0;
+  OutPos := OutStrm.Position;
+  Stream.ReadBuffer(Count, SizeOf(Count));
+  Try
+    { --  128 key 16 bytes -- }
+    If KeyBit = kb128 Then
+    Begin
+      FillChar(AESKey128, SizeOf(AESKey128), 0);
+      Move(PChar(Key)^, AESKey128, Min(SizeOf(AESKey128), Length(Key)));
+      DecryptAESStreamECB(Stream, Stream.Size - Stream.Position, AESKey128,
+        OutStrm);
+    End;
+    { --  192 key 24 bytes -- }
+    If KeyBit = kb192 Then
+    Begin
+      FillChar(AESKey192, SizeOf(AESKey192), 0);
+      Move(PChar(Key)^, AESKey192, Min(SizeOf(AESKey192), Length(Key)));
+      DecryptAESStreamECB(Stream, Stream.Size - Stream.Position, AESKey192,
+        OutStrm);
+    End;
+    { --  256 key 32 bytes -- }
+    If KeyBit = kb256 Then
+    Begin
+      FillChar(AESKey256, SizeOf(AESKey256), 0);
+      Move(PChar(Key)^, AESKey256, Min(SizeOf(AESKey256), Length(Key)));
+      DecryptAESStreamECB(Stream, Stream.Size - Stream.Position, AESKey256,
+        OutStrm);
+    End;
+    OutStrm.Size := OutPos + Count;
+    OutStrm.Position := OutPos;
+    Result := OutStrm;
+  Finally
+    OutStrm.Free;
+  End;
+End;
+
+{ --  file 128 key -- }
+Procedure EncryptFile(SourceFile, DestFile: String; Key: String;
+  KeyBit: TKeyBit = kb128);
+Var
+  SFS, DFS: TFileStream;
+  Size: Int64;
+  AESKey128: TAESKey128;
+  AESKey192: TAESKey192;
+  AESKey256: TAESKey256;
+Begin
+  SFS := TFileStream.Create(SourceFile, fmOpenRead);
+  Try
+    DFS := TFileStream.Create(DestFile, fmCreate);
+    Try
+      Size := SFS.Size;
+      DFS.WriteBuffer(Size, SizeOf(Size));
+      { --  128 key 16 bytes -- }
+      If KeyBit = kb128 Then
+      Begin
+        FillChar(AESKey128, SizeOf(AESKey128), 0);
+        Move(PChar(Key)^, AESKey128, Min(SizeOf(AESKey128), Length(Key)));
+        EncryptAESStreamECB(SFS, 0, AESKey128, DFS);
+      End;
+      { --  192 key 24 bytes -- }
+      If KeyBit = kb192 Then
+      Begin
+        FillChar(AESKey192, SizeOf(AESKey192), 0);
+        Move(PChar(Key)^, AESKey192, Min(SizeOf(AESKey192), Length(Key)));
+        EncryptAESStreamECB(SFS, 0, AESKey192, DFS);
+      End;
+      { --  256 key 32 bytes -- }
+      If KeyBit = kb256 Then
+      Begin
+        FillChar(AESKey256, SizeOf(AESKey256), 0);
+        Move(PChar(Key)^, AESKey256, Min(SizeOf(AESKey256), Length(Key)));
+        EncryptAESStreamECB(SFS, 0, AESKey256, DFS);
+      End;
+    Finally
+      DFS.Free;
+    End;
+  Finally
+    SFS.Free;
+  End;
+End;
+
+{ --  file 128 key -- }
+Procedure DecryptFile(SourceFile, DestFile: String; Key: String;
+  KeyBit: TKeyBit = kb128);
+Var
+  SFS, DFS: TFileStream;
+  Size: Int64;
+  AESKey128: TAESKey128;
+  AESKey192: TAESKey192;
+  AESKey256: TAESKey256;
+Begin
+  SFS := TFileStream.Create(SourceFile, fmOpenRead);
+  Try
+    SFS.ReadBuffer(Size, SizeOf(Size));
+    DFS := TFileStream.Create(DestFile, fmCreate);
+    Try
+      { --  128 key 16 bytes -- }
+      If KeyBit = kb128 Then
+      Begin
+        FillChar(AESKey128, SizeOf(AESKey128), 0);
+        Move(PChar(Key)^, AESKey128, Min(SizeOf(AESKey128), Length(Key)));
+        DecryptAESStreamECB(SFS, SFS.Size - SFS.Position, AESKey128, DFS);
+      End;
+      { --  192 key 24 bytes -- }
+      If KeyBit = kb192 Then
+      Begin
+        FillChar(AESKey192, SizeOf(AESKey192), 0);
+        Move(PChar(Key)^, AESKey192, Min(SizeOf(AESKey192), Length(Key)));
+        DecryptAESStreamECB(SFS, SFS.Size - SFS.Position, AESKey192, DFS);
+      End;
+      { --  256 key 32 bytes -- }
+      If KeyBit = kb256 Then
+      Begin
+        FillChar(AESKey256, SizeOf(AESKey256), 0);
+        Move(PChar(Key)^, AESKey256, Min(SizeOf(AESKey256), Length(Key)));
+        DecryptAESStreamECB(SFS, SFS.Size - SFS.Position, AESKey256, DFS);
+      End;
+      DFS.Size := Size;
+    Finally
+      DFS.Free;
+    End;
+  Finally
+    SFS.Free;
+  End;
+End;
+
+End.
